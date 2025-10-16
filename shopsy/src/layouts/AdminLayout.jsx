@@ -8,7 +8,8 @@ const AdminLayout = () => {
     <div className="bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="flex">
         <AdminSidebar />
-        <div className="flex-1 flex flex-col">
+        {/* Offset main content to not sit under the fixed sidebar */}
+        <div className="flex-1 flex flex-col ml-64">
           <AdminHeader />
           <main className="flex-1 p-6">
             <Outlet />

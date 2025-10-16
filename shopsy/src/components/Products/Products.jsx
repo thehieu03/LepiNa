@@ -1,9 +1,7 @@
 import React from "react";
+import PlaceholderImg from "../../assets/image.png";
 import { fetchProducts } from "../../api/client";
-import Img1 from "../../assets/women/women.png";
-import Img2 from "../../assets/women/women2.jpg";
-import Img3 from "../../assets/women/women3.jpg";
-import Img4 from "../../assets/women/women4.jpg";
+// Unused demo images removed to satisfy linter
 import Product1 from "../../assets/productThuoc/botri.jpg";
 import Product2 from "../../assets/productThuoc/saucuonla.jpg";
 import Product3 from "../../assets/productThuoc/retsap.png";
@@ -91,9 +89,7 @@ const Products = () => {
         {/* Body section */}
         <div>
           {loading && <p className="text-center">Đang tải dữ liệu...</p>}
-          {error && (
-            <p className="text-center text-red-500">Lỗi: {error}</p>
-          )}
+          {error && <p className="text-center text-red-500">Lỗi: {error}</p>}
           <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 place-items-center gap-5">
             {/* card section */}
             {(items.length ? items : ProductsData).map((data) => (
@@ -104,13 +100,15 @@ const Products = () => {
                 className="space-y-3"
               >
                 <img
-                  src={data.img || data.image_url || "https://via.placeholder.com/150x220?text=LEPINA"}
+                  src={data.img || data.image_url || PlaceholderImg}
                   alt=""
                   className="h-[220px] w-[150px] object-cover rounded-md"
                 />
                 <div>
                   <h3 className="font-semibold">{data.title || data.name}</h3>
-                  <p className="text-sm text-gray-600">{data.color || data.origin}</p>
+                  <p className="text-sm text-gray-600">
+                    {data.color || data.origin}
+                  </p>
                   <div className="flex items-center gap-1">
                     <FaStar className="text-yellow-400" />
                     <span>{data.rating || "5.0"}</span>

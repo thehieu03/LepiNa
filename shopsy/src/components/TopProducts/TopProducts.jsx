@@ -1,4 +1,5 @@
 import React from "react";
+import PlaceholderImg from "../../assets/image.png";
 import { fetchProducts } from "../../api/client";
 import Img1 from "../../assets/productThuoc/botri.jpg";
 import Img2 from "../../assets/productThuoc/sauducthan.png";
@@ -28,10 +29,14 @@ const ProductsData = [
       "Chế phẩm sinh học an toàn từ vỏ chanh và tinh dầu thiên nhiên, đặc trị rệp sáp trên cây cảnh, dưa leo, ổi, mít và nhiều loại cây ăn trái khác.",
   },
 ];
+import PropTypes from "prop-types";
+
 const TopProducts = ({ handleOrderPopup }) => {
   const [items, setItems] = React.useState([]);
   React.useEffect(() => {
-    fetchProducts().then(setItems).catch(() => setItems([]));
+    fetchProducts()
+      .then(setItems)
+      .catch(() => setItems([]));
   }, []);
   return (
     <div>
@@ -54,13 +59,14 @@ const TopProducts = ({ handleOrderPopup }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-20 md:gap-5 place-items-center">
           {(items.length ? items.slice(0, 3) : ProductsData).map((data) => (
             <div
+              key={data.id || data.title}
               data-aos="zoom-in"
               className="rounded-2xl bg-white dark:bg-gray-800 hover:bg-black/80 dark:hover:bg-primary hover:text-white relative shadow-xl duration-300 group max-w-[300px]"
             >
               {/* image section */}
               <div className="h-[100px]">
                 <img
-                  src={data.img || data.image_url || "https://via.placeholder.com/140?text=LEPINA"}
+                  src={data.img || data.image_url || PlaceholderImg}
                   alt=""
                   className="max-w-[140px] block mx-auto transform -translate-y-20 group-hover:scale-105 duration-300 drop-shadow-md"
                 />
@@ -99,3 +105,7 @@ const TopProducts = ({ handleOrderPopup }) => {
 };
 
 export default TopProducts;
+
+TopProducts.propTypes = {
+  handleOrderPopup: PropTypes.func,
+};

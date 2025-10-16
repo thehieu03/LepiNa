@@ -1,5 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { authAPI } from "../api/client";
+import jwtDecode from "jwt-decode";
+import PropTypes from "prop-types";
 
 const AuthContext = createContext();
 
@@ -18,9 +20,24 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     if (token) {
-      // Verify token and get user info
-      // For now, we'll assume the token is valid if it exists
-      setUser({ token, role: "admin" }); // You might want to decode JWT to get actual user info
+      try {
+        const decoded = jwtDecode(token);
+        const role =
+          decoded["role"] ||
+          decoded[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ] ||
+          "user";
+        const exp = decoded["exp"] ? decoded["exp"] * 1000 : 0;
+        if (exp && Date.now() > exp) {
+          localStorage.removeItem("lepina_token");
+          setUser(null);
+        } else {
+          setUser({ token, role });
+        }
+      } catch (_) {
+        setUser(null);
+      }
     }
     setLoading(false);
   }, [token]);
@@ -32,7 +49,18 @@ export const AuthProvider = ({ children }) => {
 
       localStorage.setItem("lepina_token", access_token);
       setToken(access_token);
-      setUser({ token: access_token, role: "admin" });
+      try {
+        const decoded = jwtDecode(access_token);
+        const role =
+          decoded["role"] ||
+          decoded[
+            "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
+          ] ||
+          "user";
+        setUser({ token: access_token, role });
+      } catch (_) {
+        setUser({ token: access_token, role: "user" });
+      }
 
       return { success: true };
     } catch (error) {
@@ -73,4 +101,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+AuthProvider.propTypes = {
+  children: PropTypes.node.isRequired,
 };

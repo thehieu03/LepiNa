@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import PlaceholderImg from "../../assets/image.png";
 import { useCart } from "../../hooks/useCart.jsx";
 import { FiPlus, FiMinus, FiTrash2, FiShoppingBag } from "react-icons/fi";
 import toast from "react-hot-toast";
@@ -68,10 +69,7 @@ const CartPage = () => {
               >
                 <div className="flex items-center space-x-4">
                   <img
-                    src={
-                      item.image ||
-                      "https://via.placeholder.com/80x80?text=No+Image"
-                    }
+                    src={item.image || PlaceholderImg}
                     alt={item.name}
                     className="w-20 h-20 object-cover rounded-lg"
                   />

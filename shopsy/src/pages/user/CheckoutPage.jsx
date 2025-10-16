@@ -117,7 +117,7 @@ const CheckoutPage = () => {
                   {...register("customerName", {
                     required: "Vui lòng nhập họ và tên",
                   })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-400"
                   placeholder="Nhập họ và tên"
                 />
                 {errors.customerName && (
@@ -140,7 +140,7 @@ const CheckoutPage = () => {
                     },
                   })}
                   type="email"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-400"
                   placeholder="Nhập email"
                 />
                 {errors.email && (
@@ -158,7 +158,7 @@ const CheckoutPage = () => {
                   {...register("phone", {
                     required: "Vui lòng nhập số điện thoại",
                   })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-400"
                   placeholder="Nhập số điện thoại"
                 />
                 {errors.phone && (
@@ -177,7 +177,7 @@ const CheckoutPage = () => {
                     required: "Vui lòng nhập địa chỉ",
                   })}
                   rows={3}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-400"
                   placeholder="Nhập địa chỉ giao hàng"
                 />
                 {errors.address && (
@@ -194,7 +194,7 @@ const CheckoutPage = () => {
                 <textarea
                   {...register("notes")}
                   rows={2}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white dark:border-gray-600 placeholder-gray-400 dark:placeholder-gray-400"
                   placeholder="Ghi chú thêm (tùy chọn)"
                 />
               </div>

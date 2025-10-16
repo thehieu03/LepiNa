@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace api.Models;
 
@@ -15,5 +16,6 @@ public partial class Ingredient
 
     public DateTime CreatedAt { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<ProductIngredient> ProductIngredients { get; set; } = new List<ProductIngredient>();
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace api.Models;
 
@@ -23,8 +24,10 @@ public partial class Product
 
     public DateTime UpdatedAt { get; set; }
 
+    [JsonIgnore]
     public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 
+    [JsonIgnore]
     public virtual ICollection<ProductIngredient> ProductIngredients { get; set; } = new List<ProductIngredient>();
 
     public virtual ProductPrice? ProductPrice { get; set; }

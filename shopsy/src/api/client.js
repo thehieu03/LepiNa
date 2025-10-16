@@ -10,7 +10,20 @@ export const api = axios.create({
 // Add auth interceptor
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("lepina_token");
-  if (token) {
+
+  // Do not attach Authorization header for public, unauthenticated endpoints
+  // Normalize path without query string
+  const urlPath = (config.url || "").split("?")[0];
+  const PUBLIC_ENDPOINTS = new Set([
+    "/api/products",
+    "/api/products/with-active-price",
+    "/api/feedback",
+    "/api/analytics/top-products",
+  ]);
+
+  const isPublicEndpoint = PUBLIC_ENDPOINTS.has(urlPath);
+
+  if (token && !isPublicEndpoint) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -20,9 +33,19 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Surface basic diagnostics in development
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.error("API error:", {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem("lepina_token");
-      window.location.hash = "#admin/login";
+      window.location.href = "/admin/login";
     }
     return Promise.reject(error);
   }
@@ -422,24 +445,72 @@ export const surveysAPI = {
 // ===== ANALYTICS =====
 export const analyticsAPI = {
   getDashboard: async () => {
-    const res = await api.get("/api/analytics/dashboard");
-    return res.data;
+    try {
+      const res = await api.get("/api/analytics/dashboard");
+      return res.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        return {
+          totalProducts: 0,
+          todayOrders: 0,
+          newCustomers: 0,
+          monthlyRevenue: 0,
+          deliveredOrders: 0,
+          shippedOrders: 0,
+          pendingOrders: 0,
+          cancelledOrders: 0,
+          conversionRate: 0,
+          averageOrderValue: 0,
+          customerSatisfaction: 0,
+        };
+      }
+      throw err;
+    }
   },
   getRevenueChart: async (period = "30d") => {
-    const res = await api.get(`/api/analytics/revenue?period=${period}`);
-    return res.data;
+    try {
+      const res = await api.get(`/api/analytics/revenue?period=${period}`);
+      return res.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        // Return empty series to avoid UI errors
+        return { labels: [], data: [] };
+      }
+      throw err;
+    }
   },
   getTopProducts: async (limit = 10) => {
-    const res = await api.get(`/api/analytics/top-products?limit=${limit}`);
-    return res.data;
+    try {
+      const res = await api.get(`/api/analytics/top-products?limit=${limit}`);
+      return res.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        return [];
+      }
+      throw err;
+    }
   },
   getOrderStats: async () => {
-    const res = await api.get("/api/analytics/orders");
-    return res.data;
+    try {
+      const res = await api.get("/api/analytics/orders");
+      return res.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        return {};
+      }
+      throw err;
+    }
   },
   getCustomerStats: async () => {
-    const res = await api.get("/api/analytics/customers");
-    return res.data;
+    try {
+      const res = await api.get("/api/analytics/customers");
+      return res.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        return {};
+      }
+      throw err;
+    }
   },
 };
 

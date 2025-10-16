@@ -15,4 +15,12 @@ public class OrderItemsController : BaseCrudController<OrderItem>
         return query.Include(oi => oi.Order)
                    .Include(oi => oi.Product);
     }
+
+    // GET: api/orderitems/order/{orderId}
+    [HttpGet("order/{orderId}")]
+    public async Task<ActionResult<IEnumerable<OrderItem>>> GetByOrder(int orderId)
+    {
+        var query = IncludeRelationships(_dbSet).Where(oi => oi.OrderId == orderId);
+        return await query.ToListAsync();
+    }
 }

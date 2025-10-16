@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
+import PlaceholderImg from "../../assets/image.png";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { productsAPI } from "../../api/client";
@@ -37,8 +38,13 @@ const ProductsPage = () => {
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.origin?.toLowerCase().includes(searchQuery.toLowerCase());
 
+    // Default missing/invalid prices to 0 so items still appear
+    const productPrice =
+      typeof product.price_vnd === "number" && !Number.isNaN(product.price_vnd)
+        ? product.price_vnd
+        : 0;
     const matchesPrice =
-      product.price_vnd >= priceRange[0] && product.price_vnd <= priceRange[1];
+      productPrice >= priceRange[0] && productPrice <= priceRange[1];
 
     return matchesSearch && matchesPrice;
   });
@@ -187,11 +193,7 @@ const ProductsPage = () => {
             >
               <div className="aspect-w-1 aspect-h-1">
                 <img
-                  src={
-                    product.image_url ||
-                    product.imageUrl ||
-                    "https://via.placeholder.com/300x300?text=No+Image"
-                  }
+                  src={product.image_url || product.imageUrl || PlaceholderImg}
                   alt={product.name}
                   className="w-full h-48 object-cover"
                 />

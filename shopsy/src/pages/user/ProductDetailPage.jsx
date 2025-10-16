@@ -1,4 +1,5 @@
 import React from "react";
+import PlaceholderImg from "../../assets/image.png";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { productsAPI, feedbackAPI } from "../../api/client";
@@ -90,11 +91,7 @@ const ProductDetailPage = () => {
         <div className="space-y-4">
           <div className="aspect-w-1 aspect-h-1">
             <img
-              src={
-                product.image_url ||
-                product.imageUrl ||
-                "https://via.placeholder.com/600x600?text=No+Image"
-              }
+              src={product.image_url || product.imageUrl || PlaceholderImg}
               alt={product.name}
               className="w-full h-96 object-cover rounded-lg shadow-lg"
             />

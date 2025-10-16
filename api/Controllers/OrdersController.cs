@@ -17,4 +17,12 @@ public class OrdersController : BaseCrudController<Order>
                    .Include(o => o.OrderItems)
                    .Include(o => o.Feedbacks);
     }
+
+    // GET: api/orders/customer/{customerId}
+    [HttpGet("customer/{customerId}")]
+    public async Task<ActionResult<IEnumerable<Order>>> GetByCustomer(int customerId)
+    {
+        var query = IncludeRelationships(_dbSet).Where(o => o.CustomerId == customerId);
+        return await query.ToListAsync();
+    }
 }
