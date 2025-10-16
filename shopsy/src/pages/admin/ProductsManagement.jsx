@@ -3,8 +3,23 @@ import PlaceholderImg from "../../assets/image.png";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { productsAPI } from "../../api/client";
 import { FiEdit, FiTrash2, FiPlus } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 const ProductsManagement = () => {
+  const normalizeStatus = (value) => {
+    if (!value) return "";
+    const v = String(value).trim().toLowerCase();
+    // Accept backend codes
+    if (v === "draft") return "Draft";
+    if (v === "testing") return "Testing";
+    if (v === "launched") return "Launched";
+    // Map Vietnamese UI labels to backend codes
+    if (v === "nháp" || v === "nhap") return "Draft";
+    if (v === "thử nghiệm" || v === "thu nghiem") return "Testing";
+    if (v === "hoạt động" || v === "hoat dong") return "Launched";
+    return "";
+  };
+
   const queryClient = useQueryClient();
   const [isEditOpen, setIsEditOpen] = React.useState(false);
   const [isCreateOpen, setIsCreateOpen] = React.useState(false);
@@ -12,7 +27,8 @@ const ProductsManagement = () => {
     name: "",
     description: "",
     origin: "",
-    status: "active",
+    // default chọn "Launched" cho UI; có thể bỏ status bằng cách xóa trước khi gửi
+    status: "Launched",
     price_vnd: 0,
     imageData: "",
     imageMimeType: "",
@@ -22,11 +38,12 @@ const ProductsManagement = () => {
     name: "",
     description: "",
     origin: "",
-    status: "active",
+    status: "Active",
     price_vnd: 0,
     imageData: "",
     imageMimeType: "",
   });
+  const [editPreviewSrc, setEditPreviewSrc] = React.useState("");
 
   const { data: products = [], isLoading } = useQuery({
     queryKey: ["admin-products"],
@@ -35,13 +52,53 @@ const ProductsManagement = () => {
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }) => productsAPI.update(id, payload),
-    onSuccess: (updated) => {
-      // Update cache immediately so new image shows without waiting
+    onSuccess: (updated, variables) => {
+      // Merge response if present; otherwise optimistically apply submitted payload
+      const fallback = { id: variables.id, ...variables.payload };
+      const merged = updated && updated.id ? updated : fallback;
       queryClient.setQueryData(["admin-products"], (old) => {
         if (!Array.isArray(old)) return old;
-        return old.map((p) => (p.id === updated.id ? { ...p, ...updated } : p));
+        return old.map((p) =>
+          p.id === merged.id
+            ? {
+                ...p,
+                ...merged,
+                price_vnd:
+                  typeof merged.price_vnd === "number"
+                    ? merged.price_vnd
+                    : typeof merged.priceVnd === "number"
+                    ? merged.priceVnd
+                    : p.price_vnd,
+              }
+            : p
+        );
       });
       setIsEditOpen(false);
+    },
+    onError: (error, variables) => {
+      // eslint-disable-next-line no-console
+      console.error("Update product failed", {
+        id: variables?.id,
+        payload: variables?.payload,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        message: error?.message,
+      });
+      toast.error(
+        String(
+          error?.response?.data?.detail ||
+            error?.response?.data?.message ||
+            error?.message ||
+            "Cập nhật thất bại"
+        )
+      );
+    },
+    onSettled: () => {
+      // Ensure eventual consistency if server transforms fields
+      queryClient.invalidateQueries({
+        queryKey: ["admin-products"],
+        exact: true,
+      });
     },
   });
 
@@ -57,25 +114,70 @@ const ProductsManagement = () => {
         name: "",
         description: "",
         origin: "",
-        status: "active",
+        status: "Active",
+        price_vnd: 0,
         imageData: "",
         imageMimeType: "",
       });
     },
   });
 
-  const openEdit = (product) => {
-    setEditForm({
+  const openEdit = async (product) => {
+    // Open modal quickly with current list data
+    setIsEditOpen(true);
+    setEditForm((prev) => ({
+      ...prev,
       id: product.id,
       name: product.name || "",
       description: product.description || "",
       origin: product.origin || "",
-      status: product.status || "active",
-      price_vnd: product.price_vnd || 0,
-      imageData: product.imageData || "",
-      imageMimeType: product.imageMimeType || "",
-    });
-    setIsEditOpen(true);
+      status: normalizeStatus(product.status) || "Launched",
+      // Normalize legacy lowercase values to title case expected by DB constraint
+      // e.g., "active" -> "Active", "inactive" -> "Inactive"
+      price_vnd:
+        typeof product.price_vnd === "number"
+          ? product.price_vnd
+          : typeof product.priceVnd === "number"
+          ? product.priceVnd
+          : 0,
+    }));
+    const quickPreview =
+      (product.imageData && product.imageMimeType
+        ? `data:${product.imageMimeType};base64,${product.imageData}`
+        : null) ||
+      product.image_url ||
+      product.imageUrl ||
+      PlaceholderImg;
+    setEditPreviewSrc(quickPreview);
+
+    // Fetch full detail to ensure latest image and price
+    try {
+      const full = await productsAPI.getById(product.id);
+      setEditForm((prev) => ({
+        ...prev,
+        name: full.name || prev.name,
+        description: full.description ?? prev.description,
+        origin: full.origin ?? prev.origin,
+        status: normalizeStatus(full.status || prev.status) || prev.status,
+        price_vnd:
+          typeof full.price_vnd === "number"
+            ? full.price_vnd
+            : typeof full.priceVnd === "number"
+            ? full.priceVnd
+            : prev.price_vnd,
+        imageData: full.imageData || "",
+        imageMimeType: full.imageMimeType || "",
+      }));
+      const preview =
+        (full.imageData && full.imageMimeType
+          ? `data:${full.imageMimeType};base64,${full.imageData}`
+          : null) || PlaceholderImg;
+      setEditPreviewSrc(preview);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("Fetch product detail failed", err);
+      toast.error("Không tải được chi tiết sản phẩm");
+    }
   };
 
   const handleEditChange = (e) => {
@@ -94,10 +196,23 @@ const ProductsManagement = () => {
       name: editForm.name,
       description: editForm.description || null,
       origin: editForm.origin || null,
-      status: editForm.status || "active",
+      // Only include status when non-empty; otherwise let DB default
+      ...(normalizeStatus(editForm.status)
+        ? { status: normalizeStatus(editForm.status) }
+        : {}),
+      // include price for PUT endpoints that require full entity
+      price_vnd:
+        typeof editForm.price_vnd === "number" ? editForm.price_vnd : 0,
+      // also send PascalCase variant for ASP.NET models
+      priceVnd: typeof editForm.price_vnd === "number" ? editForm.price_vnd : 0,
+      id,
       imageData: editForm.imageData || null,
       imageMimeType: editForm.imageMimeType || null,
     };
+    if (import.meta.env?.DEV) {
+      // eslint-disable-next-line no-console
+      console.log("Submitting product update", { id, payload });
+    }
     updateMutation.mutate({ id, payload });
   };
 
@@ -119,6 +234,8 @@ const ProductsManagement = () => {
         imageData: base64,
         imageMimeType: mime,
       }));
+      // Update preview instantly
+      setEditPreviewSrc(`data:${mime};base64,${base64}`);
     };
     reader.readAsDataURL(file);
   };
@@ -223,7 +340,9 @@ const ProductsManagement = () => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                     {new Intl.NumberFormat("vi-VN").format(
-                      product.price_vnd || 0
+                      (typeof product.price_vnd === "number"
+                        ? product.price_vnd
+                        : product.priceVnd) || 0
                     )}{" "}
                     đ
                   </td>
@@ -298,8 +417,9 @@ const ProductsManagement = () => {
                   onChange={handleEditChange}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white"
                 >
-                  <option value="active">Hoạt động</option>
-                  <option value="inactive">Ngừng bán</option>
+                  <option value="Launched">Hoạt động</option>
+                  <option value="Draft">Nháp</option>
+                  <option value="Testing">Thử nghiệm</option>
                 </select>
               </div>
               <div>
@@ -325,13 +445,12 @@ const ProductsManagement = () => {
                   accept="image/*"
                   onChange={handleFileChange}
                 />
-                {editForm.imageData && (
-                  <img
-                    src={`data:${editForm.imageMimeType};base64,${editForm.imageData}`}
-                    alt="preview"
-                    className="mt-2 h-24 w-24 object-cover rounded"
-                  />
-                )}
+                <img
+                  src={editPreviewSrc || PlaceholderImg}
+                  alt="preview"
+                  className="mt-2 h-24 w-24 object-cover rounded"
+                  onError={(e) => (e.currentTarget.src = PlaceholderImg)}
+                />
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
@@ -373,7 +492,9 @@ const ProductsManagement = () => {
                   name: createForm.name,
                   description: createForm.description || null,
                   origin: createForm.origin || null,
-                  status: createForm.status || "active",
+                  ...(normalizeStatus(createForm.status)
+                    ? { status: normalizeStatus(createForm.status) }
+                    : {}),
                   price_vnd:
                     typeof createForm.price_vnd === "number"
                       ? createForm.price_vnd
@@ -433,8 +554,9 @@ const ProductsManagement = () => {
                   }
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800 dark:text-white"
                 >
-                  <option value="active">Hoạt động</option>
-                  <option value="inactive">Ngừng bán</option>
+                  <option value="Launched">Hoạt động</option>
+                  <option value="Draft">Nháp</option>
+                  <option value="Testing">Thử nghiệm</option>
                 </select>
               </div>
               <div>

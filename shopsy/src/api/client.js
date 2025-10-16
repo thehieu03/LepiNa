@@ -132,6 +132,10 @@ export const ordersAPI = {
     const res = await api.get(`/api/orders/${id}`);
     return res.data;
   },
+  getDetail: async (id) => {
+    const res = await api.get(`/api/orders/${id}/detail`);
+    return res.data;
+  },
   getByCustomerId: async (customerId) => {
     const res = await api.get(`/api/orders/customer/${customerId}`);
     return res.data;
@@ -140,12 +144,24 @@ export const ordersAPI = {
     const res = await api.post("/api/orders", order);
     return res.data;
   },
+  checkout: async (checkoutPayload) => {
+    const res = await api.post("/api/orders/checkout", checkoutPayload);
+    return res.data;
+  },
   update: async (id, order) => {
     const res = await api.put(`/api/orders/${id}`, order);
     return res.data;
   },
   updateStatus: async (id, status) => {
     const res = await api.patch(`/api/orders/${id}/status`, { status });
+    return res.data;
+  },
+  approve: async (id) => {
+    const res = await api.post(`/api/orders/${id}/approve`);
+    return res.data;
+  },
+  cancel: async (id) => {
+    const res = await api.post(`/api/orders/${id}/cancel`);
     return res.data;
   },
   delete: async (id) => {

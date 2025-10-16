@@ -1,18 +1,12 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { ordersAPI } from "../../api/client";
 import { useCart } from "../../hooks/useCart.jsx";
 import { useAuth } from "../../contexts/AuthContext";
 import toast from "react-hot-toast";
-import {
-  FiUser,
-  FiPhone,
-  FiMapPin,
-  FiMail,
-  FiCreditCard,
-} from "react-icons/fi";
+import { FiUser, FiCreditCard } from "react-icons/fi";
 
 const CheckoutPage = () => {
   const navigate = useNavigate();
@@ -35,7 +29,7 @@ const CheckoutPage = () => {
   });
 
   const createOrderMutation = useMutation({
-    mutationFn: ordersAPI.create,
+    mutationFn: ordersAPI.checkout,
     onSuccess: (data) => {
       toast.success("Đặt hàng thành công!");
       clearCart();
@@ -55,18 +49,21 @@ const CheckoutPage = () => {
       return;
     }
 
+    // Build payload exactly as backend expects now
     const orderData = {
       customerName: data.customerName,
       email: data.email,
       phone: data.phone,
       address: data.address,
-      notes: data.notes,
       paymentMethod,
-      totalAmountVnd: getTotalPrice(),
+      notes: data.notes,
       items: items.map((item) => ({
         productId: item.id,
         quantity: item.quantity,
-        unitPrice: item.price,
+        unitPrice:
+          typeof item.price === "number" && !Number.isNaN(item.price)
+            ? item.price
+            : 0,
       })),
     };
 

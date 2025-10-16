@@ -17,11 +17,24 @@ public class Program
             // Avoid serialization errors from EF Core navigation cycles
             options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
             options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
         });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(o =>
         {
             o.CustomSchemaIds(t => t.FullName);
+        });
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("AllowVite5173", policy =>
+            {
+                policy.WithOrigins(
+                        "http://localhost:5173",
+                        "http://127.0.0.1:5173"
+                    )
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
         });
         builder.Services.AddDbContext<AppDbContext>(options =>
         {
@@ -61,9 +74,10 @@ public class Program
             app.UseSwaggerUI();
         }
 
-        app.UseCors(optionns =>
-        {
-            optionns.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin();
+        app.UseCors(options=>{
+            options.AllowAnyOrigin()
+            .AllowAnyHeader()
+            .AllowAnyMethod();
         });
 
         app.UseAuthentication();

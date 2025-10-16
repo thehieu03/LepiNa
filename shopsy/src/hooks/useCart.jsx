@@ -4,7 +4,7 @@ const CartContext = createContext();
 
 const cartReducer = (state, action) => {
   switch (action.type) {
-    case "ADD_ITEM":
+    case "ADD_ITEM": {
       const existingItem = state.items.find(
         (item) => item.id === action.payload.id
       );
@@ -22,6 +22,7 @@ const cartReducer = (state, action) => {
         ...state,
         items: [...state.items, action.payload],
       };
+    }
 
     case "REMOVE_ITEM":
       return {
@@ -82,13 +83,34 @@ export const CartProvider = ({ children }) => {
   }, [state.items]);
 
   const addItem = (product, quantity = 1) => {
+    // Normalize price from various API shapes
+    const priceVnd =
+      (typeof product.price_vnd === "number" && !Number.isNaN(product.price_vnd)
+        ? product.price_vnd
+        : undefined) ??
+      (typeof product.priceVnd === "number" && !Number.isNaN(product.priceVnd)
+        ? product.priceVnd
+        : undefined) ??
+      (typeof product.price === "number" && !Number.isNaN(product.price)
+        ? product.price
+        : 0);
+
+    // Prefer base64 image if available
+    const imageSrc =
+      (product.imageData && product.imageMimeType
+        ? `data:${product.imageMimeType};base64,${product.imageData}`
+        : null) ||
+      product.image_url ||
+      product.imageUrl ||
+      product.image;
+
     dispatch({
       type: "ADD_ITEM",
       payload: {
         id: product.id,
         name: product.name,
-        price: product.price,
-        image: product.image_url || product.imageUrl,
+        price: priceVnd,
+        image: imageSrc,
         quantity,
       },
     });
@@ -117,10 +139,17 @@ export const CartProvider = ({ children }) => {
   };
 
   const getTotalPrice = () => {
-    return state.items.reduce(
-      (total, item) => total + item.price * item.quantity,
-      0
-    );
+    return state.items.reduce((total, item) => {
+      const p =
+        typeof item.price === "number" && !Number.isNaN(item.price)
+          ? item.price
+          : 0;
+      const q =
+        typeof item.quantity === "number" && !Number.isNaN(item.quantity)
+          ? item.quantity
+          : 0;
+      return total + p * q;
+    }, 0);
   };
 
   const value = {
